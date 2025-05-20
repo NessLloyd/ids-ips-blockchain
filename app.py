@@ -21,17 +21,20 @@ if uploaded_file:
     scaler = model_data['scaler']
     label_encoders = model_data['label_encoders']
 
-    # Encode columns
-    for col, encoder in label_encoders.items():
-        if col in log_df.columns:
-            try:
-                log_df[col] = encoder.transform(log_df[col].astype(str))
-            except ValueError:
-                st.error(f"❌ Uploaded file contains unknown value in column: {col}")
-                st.stop()
-
-    drop_cols = ['srcip', 'dstip', 'attack_cat', 'label']
+    drop_cols = ['srcip', 'dstip', 'attack_cat', 'label']  # columns not used for prediction
     feature_cols = [col for col in log_df.columns if col not in drop_cols]
+
+# Encode only necessary columns (exclude dropped columns)
+for col, encoder in label_encoders.items():
+    if col in drop_cols:
+        continue  # skip encoding unused columns
+    if col in log_df.columns:
+        try:
+            log_df[col] = encoder.transform(log_df[col].astype(str))
+        except ValueError:
+            st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
+            st.stop()
+
     X = scaler.transform(log_df[feature_cols])
 
     prediction = model.predict(X)[0]
