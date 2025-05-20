@@ -35,10 +35,8 @@ if uploaded_file:
                 st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
                 st.stop()
 
-    # Only keep numeric columns for scaler
     log_df = log_df.select_dtypes(include=["number"])
-
-    # Scale and predict
+    feature_cols = list(log_df.columns)  # only use available numeric columns
     X = scaler.transform(log_df[feature_cols])
     prediction = model.predict(X)[0]
 
