@@ -24,19 +24,22 @@ if uploaded_file:
     drop_cols = ['srcip', 'dstip', 'attack_cat', 'label']  # columns not used for prediction
     feature_cols = [col for col in log_df.columns if col not in drop_cols]
 
-# Encode only necessary columns (exclude dropped columns)
-for col, encoder in label_encoders.items():
-    if col in drop_cols:
-        continue  # skip encoding unused columns
-    if col in log_df.columns:
-        try:
-            log_df[col] = encoder.transform(log_df[col].astype(str))
-        except ValueError:
-            st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
-            st.stop()
+    # Encode only necessary columns (exclude dropped columns)
+    for col, encoder in label_encoders.items():
+        if col in drop_cols:
+            continue
+        if col in log_df.columns:
+            try:
+                log_df[col] = encoder.transform(log_df[col].astype(str))
+            except ValueError:
+                st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
+                st.stop()
 
+    # Only keep numeric columns for scaler
+    log_df = log_df.select_dtypes(include=["number"])
+
+    # Scale and predict
     X = scaler.transform(log_df[feature_cols])
-
     prediction = model.predict(X)[0]
 
     if prediction == 1:
@@ -47,6 +50,7 @@ for col, encoder in label_encoders.items():
     else:
         st.success("✅ No intrusion detected.")
 
+# Tracing interface
 st.subheader("🔍 Trace Incidents")
 query = st.text_input("Enter cookie / user_id / transaction_id")
 if st.button("Trace"):
