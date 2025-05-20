@@ -35,9 +35,19 @@ if uploaded_file:
                 st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
                 st.stop()
 
-    log_df = log_df.select_dtypes(include=["number"])
-    feature_cols = list(log_df.columns)  # only use available numeric columns
+    # Drop label column if present
+    if 'label' in log_df.columns:
+        log_df = log_df.drop(columns=['label'])
+
+    # Convert datetime columns if they exist
+    for time_col in ['Stime', 'Ltime']:
+        if time_col in log_df.columns:
+            log_df[time_col] = pd.to_datetime(log_df[time_col], errors='coerce').astype('int64') // 10**9  # convert to UNIX timestamp
+
+    # Get only feature columns the model was trained on
+    feature_cols = model.feature_names_in_  # safe and accurate!
     X = scaler.transform(log_df[feature_cols])
+
     prediction = model.predict(X)[0]
 
     if prediction == 1:
