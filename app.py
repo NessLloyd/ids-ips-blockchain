@@ -26,29 +26,30 @@ if uploaded_file:
 
     # Encode only necessary columns (exclude dropped columns)
     for col, encoder in label_encoders.items():
-        if col in drop_cols:
-            continue
         if col in log_df.columns:
             try:
                 log_df[col] = encoder.transform(log_df[col].astype(str))
             except ValueError:
                 st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
                 st.stop()
-
-    # Drop label column if present
-    if 'label' in log_df.columns:
-        log_df = log_df.drop(columns=['label'])
-
-    # Convert datetime columns if they exist
+    
+    # Drop unused or non-numeric columns
+    drop_cols = ['srcip', 'dstip', 'attack_cat', 'label']
+    log_df = log_df.drop(columns=drop_cols, errors='ignore')
+    
+    # Convert datetime columns if needed
     for time_col in ['Stime', 'Ltime']:
         if time_col in log_df.columns:
-            log_df[time_col] = pd.to_datetime(log_df[time_col], errors='coerce').astype('int64') // 10**9  # convert to UNIX timestamp
-
-    # Get only feature columns the model was trained on
-    feature_cols = model.feature_names_in_  # safe and accurate!
-    X = scaler.transform(log_df[feature_cols])
-
+            log_df[time_col] = pd.to_datetime(log_df[time_col], errors='coerce').astype('int64') // 10**9
+    
+    # Keep only numeric columns
+    log_df = log_df.select_dtypes(include=["number"])
+    
+    # Scale and predict
+    X = scaler.transform(log_df)
     prediction = model.predict(X)[0]
+
+   
 
     if prediction == 1:
         st.error("⚠️ Intrusion Detected!")
