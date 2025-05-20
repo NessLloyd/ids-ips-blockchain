@@ -2,6 +2,7 @@
 
 This project integrates a machine learning-based Intrusion Detection System (IDS) with a blockchain-based logging mechanism using Streamlit for real-time web interaction.
 
+👉 **[Try it](https://ids-ips-blockchain.streamlit.app/)**
 ## Features
 
 - Detects intrusions using Random Forest trained on UNSW-NB15 dataset
