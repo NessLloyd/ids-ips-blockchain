@@ -24,14 +24,15 @@ if uploaded_file:
     drop_cols = ['srcip', 'dstip', 'attack_cat', 'label']  # columns not used for prediction
     feature_cols = [col for col in log_df.columns if col not in drop_cols]
 
-    # Encode only necessary columns (exclude dropped columns)
+    # Encode columns if they exist and are known — ignore unknown ones
     for col, encoder in label_encoders.items():
         if col in log_df.columns:
             try:
                 log_df[col] = encoder.transform(log_df[col].astype(str))
-            except ValueError:
-                st.error(f"❌ Uploaded file contains unknown value in column: '{col}'")
-                st.stop()
+            except Exception:
+                # Drop the column if it contains unseen labels
+                log_df.drop(columns=[col], inplace=True)
+
     
     # Drop unused or non-numeric columns
     drop_cols = ['srcip', 'dstip', 'attack_cat', 'label']
