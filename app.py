@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from ids_model import NetworkSecuritySystem
 from blockchain import Blockchain, Source
 import joblib
 import os
